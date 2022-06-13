@@ -3,12 +3,16 @@
 
 #pragma once
 
+#include <deque>
+#include <functional>
 #include <string>
 #include <vk_types.h>
 #include <vector>
 
 #include "vk_Mesh.h"
 #include "glm/glm.hpp"
+
+#define FRAMESINFLIGHT 2
 
 struct FrameData
 {
@@ -17,6 +21,8 @@ struct FrameData
 
 	VkCommandPool commandPool;
 	VkCommandBuffer commandBuffer;
+	AllocatedBuffer cameraBuffer;
+	VkDescriptorSet cameraDescriptor;
 };
 
 struct MeshPushConstants
@@ -24,6 +30,32 @@ struct MeshPushConstants
 	glm::vec4 data;
 	glm::mat4 renderMatrix;
 };
+
+struct GPUCameraData
+{
+	glm::mat4 viewMatrix;
+	glm::mat4 projectionMatrix;
+	glm::mat4 viewProjectionMatrix;
+};
+
+struct DeletionQueue
+{
+	std::deque<std::function<void()>> deletors;
+	void PushFunction(std::function<void()>&& func)
+	{
+		deletors.push_back(func);
+	}
+
+	void Flush()
+	{
+		for (auto it = deletors.begin(); it != deletors.end(); ++it)
+		{
+			(*it)();
+		}
+		deletors.clear();
+	}
+};
+
 class VulkanEngine
 {
 public:
@@ -56,17 +88,19 @@ private:
 	void InitDefaultRenderpass();
 	void InitFramebuffer();
 	void InitSyncStructures();
+	void InitDescriptorSetLayout();
 	void LoadMeshes();
+	AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 	void UploadMesh(Mesh& mesh);
 	bool LoadFromObj(const char* filename);
 	int m_FrameNumber;
 	FrameData& GetCurrentFrame();
 
-	FrameData m_Frames[2];
+	VkDescriptorSetLayout m_GlobalSetlayout;
+	VkDescriptorPool m_DescriptorPool;
 
-	VkSemaphore m_PresentSemaphore;
-	VkSemaphore m_RenderSemaphore;
-	VkFence m_RenderFence;
+	DeletionQueue m_DeletionQueue;
+	FrameData m_Frames[FRAMESINFLIGHT];
 
 	VkRenderPass m_RenderPass;
 	std::vector<VkFramebuffer> m_Framebuffers;
