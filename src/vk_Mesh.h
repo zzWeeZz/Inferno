@@ -19,6 +19,7 @@ struct Vertex
 	glm::vec3 color;
 
 	static VertexInputDescription GetVertexDescription();
+
 };
 
 struct Mesh
@@ -26,4 +27,5 @@ struct Mesh
 	std::vector<Vertex> vertices;
 
 	AllocatedBuffer vertexBuffer;
+	bool LoadFromObj(const char* filename);
 };

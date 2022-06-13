@@ -10,11 +10,16 @@
 #include <vk_initializers.h>
 #include <glm/gtx/transform.hpp>
 #include "VkBootstrap.h"
+#include "tiny_obj_loader.h"
+#include <iostream>
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
+
+
+
 #define VKCHECK(X) do { VkResult error = X; if(error) { std::cout <<"Detected Vulkan error: " << error << std::endl; exit(1); } } while(0)
 
-void VulkanEngine::init()
+void VulkanEngine::Init()
 {
 	// We initialize SDL and create a window with it. 
 	SDL_Init(SDL_INIT_VIDEO);
@@ -41,7 +46,7 @@ void VulkanEngine::init()
 	LoadMeshes();
 	_isInitialized = true;
 }
-void VulkanEngine::cleanup()
+void VulkanEngine::Cleanup()
 {
 	if (_isInitialized)
 	{
@@ -115,8 +120,8 @@ void VulkanEngine::draw()
 
 	vkCmdPushConstants(cmd, m_MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &constants);
 	VkDeviceSize offset = 0;
-	vkCmdBindVertexBuffers(cmd, 0, 1, &m_TriMesh.vertexBuffer.buffer, &offset);
-	vkCmdDraw(cmd, m_TriMesh.vertices.size(), 1, 0, 0);
+	vkCmdBindVertexBuffers(cmd, 0, 1, &m_Monke.vertexBuffer.buffer, &offset);
+	vkCmdDraw(cmd, m_Monke.vertices.size(), 1, 0, 0);
 
 	vkCmdEndRenderPass(cmd);
 	VKCHECK(vkEndCommandBuffer(cmd));
@@ -337,7 +342,6 @@ void VulkanEngine::InitPipelines()
 	pipelineBuilder.m_ShaderStages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, meshVertShader));
 	pipelineBuilder.m_ShaderStages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, triangleFragShader));
 
-
 	VkPipelineLayoutCreateInfo meshPipelineLayout = vkinit::PipelineLayoutCreateInfo();
 
 	VkPushConstantRange pushConstant;
@@ -445,7 +449,10 @@ void VulkanEngine::LoadMeshes()
 	m_TriMesh.vertices[1].color = { 0.0f, 1.0f, 0.0f };
 	m_TriMesh.vertices[2].color = { 0.0f, 0.0f, 1.0f };
 
+	m_Monke.LoadFromObj("../../assets/monkey_smooth.obj");
+
 	UploadMesh(m_TriMesh);
+	UploadMesh(m_Monke);
 
 }
 
@@ -459,12 +466,51 @@ void VulkanEngine::UploadMesh(Mesh& mesh)
 	VmaAllocationCreateInfo allocInfo{};
 	allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-	VKCHECK(vmaCreateBuffer(m_Allocator, &bufferInfo, &allocInfo, &m_TriMesh.vertexBuffer.buffer, &m_TriMesh.vertexBuffer.allocation, nullptr));
+	VKCHECK(vmaCreateBuffer(m_Allocator, &bufferInfo, &allocInfo, &mesh.vertexBuffer.buffer, &mesh.vertexBuffer.allocation, nullptr));
 
 	void* data;
-	vmaMapMemory(m_Allocator, m_TriMesh.vertexBuffer.allocation, &data);
+	vmaMapMemory(m_Allocator, mesh.vertexBuffer.allocation, &data);
 	memcpy(data, mesh.vertices.data(), sizeof(Vertex) * mesh.vertices.size());
-	vmaUnmapMemory(m_Allocator, m_TriMesh.vertexBuffer.allocation);
+	vmaUnmapMemory(m_Allocator, mesh.vertexBuffer.allocation);
+}
+
+bool VulkanEngine::LoadFromObj(const char* filename)
+{
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+
+	std::string warn;
+	std::string err;
+
+	tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename, nullptr);
+	if (!warn.empty()) std::cout << "WARN: " << warn << std::endl;
+	if (!err.empty())
+	{
+		std::cerr << err << std::endl;
+		return false;
+	}
+
+	for (size_t s = 0; s < shapes.size(); s++)
+	{
+		size_t indexOffset = 0;
+		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
+		{
+			int fv = 3;
+			for (size_t v = 0; v < fv; v++)
+			{
+				tinyobj::index_t idx = shapes[s].mesh.indices[indexOffset + v];
+				Vertex vertex;
+				vertex.position = { attrib.vertices[3 * idx.vertex_index + 0], attrib.vertices[3 * idx.vertex_index + 1], attrib.vertices[3 * idx.vertex_index + 2] };
+				vertex.normal = { attrib.normals[3 * idx.normal_index + 0], attrib.normals[3 * idx.normal_index + 1], attrib.normals[3 * idx.normal_index + 2] };
+				vertex.color = { attrib.normals[3 * idx.normal_index + 0], attrib.normals[3 * idx.normal_index + 1], attrib.normals[3 * idx.normal_index + 2] };
+				m_TriMesh.vertices.push_back(vertex);
+			}
+			indexOffset += fv;
+		}
+	}
+
+	return true;
 }
 
 VkPipeline PipelineBuilder::BuildPipeline(VkDevice device, VkRenderPass renderPass)
@@ -514,4 +560,3 @@ VkPipeline PipelineBuilder::BuildPipeline(VkDevice device, VkRenderPass renderPa
 		return newPipeline;
 	}
 }
-

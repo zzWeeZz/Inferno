@@ -27,10 +27,10 @@ public:
 	struct SDL_Window* _window{ nullptr };
 
 	//initializes everything in the engine
-	void init();
+	void Init();
 
 	//shuts down the engine
-	void cleanup();
+	void Cleanup();
 
 	//draw loop
 	void draw();
@@ -49,7 +49,7 @@ private:
 	void InitSyncStructures();
 	void LoadMeshes();
 	void UploadMesh(Mesh& mesh);
-
+	bool LoadFromObj(const char* filename);
 	float m_FrameNumber;
 
 	VkSemaphore m_PresentSemaphore;
@@ -86,6 +86,7 @@ private:
 	VkPipelineLayout m_MeshPipelineLayout;
 	VkPipeline m_MeshPipeline;
 	Mesh m_TriMesh;
+	Mesh m_Monke;
 };
 
 class PipelineBuilder
