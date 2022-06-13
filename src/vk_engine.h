@@ -10,6 +10,15 @@
 #include "vk_Mesh.h"
 #include "glm/glm.hpp"
 
+struct FrameData
+{
+	VkSemaphore presentSmeraphore, renderSemaphore;
+	VkFence renderFence;
+
+	VkCommandPool commandPool;
+	VkCommandBuffer commandBuffer;
+};
+
 struct MeshPushConstants
 {
 	glm::vec4 data;
@@ -50,7 +59,10 @@ private:
 	void LoadMeshes();
 	void UploadMesh(Mesh& mesh);
 	bool LoadFromObj(const char* filename);
-	float m_FrameNumber;
+	int m_FrameNumber;
+	FrameData& GetCurrentFrame();
+
+	FrameData m_Frames[2];
 
 	VkSemaphore m_PresentSemaphore;
 	VkSemaphore m_RenderSemaphore;
@@ -58,6 +70,10 @@ private:
 
 	VkRenderPass m_RenderPass;
 	std::vector<VkFramebuffer> m_Framebuffers;
+
+	VkImageView m_DepthImageView;
+	AllocatedImage m_DepthImage;
+	VkFormat m_DepthFormat;
 
 	VkQueue m_GraphicsQueue;
 	uint32_t m_GraphicsQueueFamily;
@@ -101,6 +117,7 @@ public:
 	VkPipelineColorBlendAttachmentState m_ColorBlendAttachmentState;
 	VkPipelineMultisampleStateCreateInfo m_Multisampling;
 	VkPipelineLayout m_PipelineLayout;
+	VkPipelineDepthStencilStateCreateInfo m_DepthStencilState;
 
 	VkPipeline BuildPipeline(VkDevice device, VkRenderPass renderPass);
 };

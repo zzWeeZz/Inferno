@@ -8,6 +8,12 @@
 //we will add our main reusable types here
 #include <vk_mem_alloc.h>
 
+struct AllocatedImage
+{
+	VkImage image;
+	VmaAllocation allocation;
+};
+
 struct AllocatedBuffer
 {
 	VkBuffer buffer;
