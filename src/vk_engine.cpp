@@ -626,7 +626,10 @@ void VulkanEngine::InitDescriptorSetLayout()
 
 		allocInfo.pSetLayouts = &m_GlobalSetlayout;
 
-		vkAllocateDescriptorSets(m_Device, &allocInfo, &m_Frames[i].);
+		vkAllocateDescriptorSets(m_Device, &allocInfo, &m_Frames[i].cameraDescriptor);
+
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = m_Frames[i].cameraBuffer.buffer;
 	}
 
 	for (size_t i = 0; i < FRAMESINFLIGHT; ++i)
