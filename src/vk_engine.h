@@ -25,6 +25,13 @@ struct FrameData
 	VkDescriptorSet cameraDescriptor;
 };
 
+struct UploadContext
+{
+	VkFence uploadFence;
+	VkCommandPool commandPool;
+	VkCommandBuffer commandBuffer;
+};
+
 struct MeshPushConstants
 {
 	glm::vec4 data;
@@ -94,6 +101,7 @@ private:
 	void UploadMesh(Mesh& mesh);
 	bool LoadFromObj(const char* filename);
 	int m_FrameNumber;
+	void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& func);
 	FrameData& GetCurrentFrame();
 
 	VkDescriptorSetLayout m_GlobalSetlayout;
@@ -129,6 +137,8 @@ private:
 	VkSurfaceKHR m_Surface;
 
 	VmaAllocator m_Allocator;
+
+	UploadContext m_UploadContext;
 
 	VkPipelineLayout m_TrianglePipelineLayout;
 	VkPipeline m_TrianglePipeline;

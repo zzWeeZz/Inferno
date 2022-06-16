@@ -35,6 +35,31 @@ VkImageViewCreateInfo vkinit::ImageViewCreateInfo(VkFormat format, VkImage image
 	return info;
 }
 
+VkCommandBufferBeginInfo vkinit::CommandBufferBeginInfo(VkCommandBufferUsageFlags usageFlags)
+{
+	VkCommandBufferBeginInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	info.pNext = nullptr;
+	info.flags = usageFlags;
+	info.pInheritanceInfo = nullptr;
+	return info;
+}
+
+VkSubmitInfo vkinit::SubmitInfo(VkCommandBuffer* commandBuffer)
+{
+	VkSubmitInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	info.pNext = nullptr;
+	info.waitSemaphoreCount = 0;
+	info.pWaitSemaphores = nullptr;
+	info.pWaitDstStageMask = nullptr;
+	info.commandBufferCount = 1;
+	info.pCommandBuffers = commandBuffer;
+	info.signalSemaphoreCount = 0;
+	info.pSignalSemaphores = nullptr;
+	return info;
+}
+
 VkCommandPoolCreateInfo vkinit::CommandPoolCreateInfo(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags)
 {
 	VkCommandPoolCreateInfo info{};
