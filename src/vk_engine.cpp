@@ -13,6 +13,7 @@
 #include "tiny_obj_loader.h"
 #include <iostream>
 #define VMA_IMPLEMENTATION
+#include "Texture.h"
 #include "vk_mem_alloc.h"
 
 
@@ -44,7 +45,9 @@ void VulkanEngine::Init()
 	InitSyncStructures();
 	InitDescriptorSetLayout();
 	InitPipelines();
+	LoadImages();
 	LoadMeshes();
+	
 	_isInitialized = true;
 }
 void VulkanEngine::Cleanup()
@@ -60,18 +63,8 @@ void VulkanEngine::Cleanup()
 
 		vkWaitForFences(m_Device, FRAMESINFLIGHT, &fences[0], VK_TRUE, UINT64_MAX);
 
-		
-
 		m_DeletionQueue.Flush();
 		vmaDestroyAllocator(m_Allocator);
-		/*vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
-		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);*/
-
-		for (size_t i = 0; i < m_SwapchainImageViews.size(); ++i)
-		{
-			/*vkDestroyFramebuffer(m_Device, m_Framebuffers[i], nullptr);
-			vkDestroyImageView(m_Device, m_SwapchainImageViews[i], nullptr);*/
-		}
 
 		vkb::destroy_debug_utils_messenger(m_Instance, m_DebugMessenger);
 		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
@@ -816,6 +809,18 @@ bool VulkanEngine::LoadFromObj(const char* filename)
 	}
 
 	return true;
+}
+
+void VulkanEngine::LoadImages()
+{
+	Texture lostEmpire;
+
+	auto res = vkutil::LoadImageFromFile(*this, "../../assets/lost_empire-RGBA.png", lostEmpire.image);
+
+	VkImageViewCreateInfo imageInfo = vkinit::ImageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, lostEmpire.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+	vkCreateImageView(m_Device, &imageInfo, nullptr, &lostEmpire.imageView);
+
+	m_LoadedTextures["empire_diffuse"] = lostEmpire;
 }
 
 void VulkanEngine::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& func)

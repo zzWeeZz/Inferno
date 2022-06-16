@@ -45,6 +45,12 @@ struct GPUCameraData
 	glm::mat4 viewProjectionMatrix;
 };
 
+struct Texture
+{
+	AllocatedImage image;
+	VkImageView imageView;
+};
+
 struct DeletionQueue
 {
 	std::deque<std::function<void()>> deletors;
@@ -85,8 +91,13 @@ public:
 
 	//run main loop
 	void run();
+	VkDevice m_Device;
 	bool LoadShaderModule(const std::string& filename, VkShaderModule* shaderModule);
-
+	AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+	void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& func);
+	VmaAllocator& GetAllocator() { return m_Allocator; }
+	DeletionQueue& GetDeletionQueue(){return m_DeletionQueue;}
+	
 private:
 	void InitVulkan();
 	void InitSwapchain();
@@ -97,11 +108,10 @@ private:
 	void InitSyncStructures();
 	void InitDescriptorSetLayout();
 	void LoadMeshes();
-	AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 	void UploadMesh(Mesh& mesh);
 	bool LoadFromObj(const char* filename);
+	void LoadImages();
 	int m_FrameNumber;
-	void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& func);
 	FrameData& GetCurrentFrame();
 
 	VkDescriptorSetLayout m_GlobalSetlayout;
@@ -131,7 +141,6 @@ private:
 	VkInstance m_Instance;
 	VkDebugUtilsMessengerEXT m_DebugMessenger;
 
-	VkDevice m_Device;
 	VkPhysicalDevice m_PhysicalDevice;
 
 	VkSurfaceKHR m_Surface;
@@ -147,6 +156,9 @@ private:
 	VkPipeline m_MeshPipeline;
 	Mesh m_TriMesh;
 	Mesh m_Monke;
+
+
+	std::unordered_map<std::string, Texture> m_LoadedTextures;
 };
 
 class PipelineBuilder
