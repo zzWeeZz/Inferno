@@ -35,6 +35,37 @@ VkImageViewCreateInfo vkinit::ImageViewCreateInfo(VkFormat format, VkImage image
 	return info;
 }
 
+VkSamplerCreateInfo vkinit::SamplerCreateInfo(VkFilter magFilter, VkSamplerAddressMode addressMode)
+{
+	VkSamplerCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	info.pNext = nullptr;
+
+	info.magFilter = magFilter;
+	info.minFilter = magFilter;
+	info.addressModeU = addressMode;
+	info.addressModeV = addressMode;
+	info.addressModeW = addressMode;
+
+	return info;
+}
+
+VkWriteDescriptorSet vkinit::WriteDescriptorSet(VkDescriptorSet dstSet, VkDescriptorType type, uint32_t binding,
+	VkDescriptorImageInfo* bufferInfo)
+{
+	VkWriteDescriptorSet write{};
+	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write.pNext = nullptr;
+
+	write.dstBinding = binding;
+	write.dstSet = dstSet;
+	write.descriptorCount = 1;
+	write.descriptorType = type;
+	write.pImageInfo = bufferInfo;
+
+	return write;
+}
+
 VkCommandBufferBeginInfo vkinit::CommandBufferBeginInfo(VkCommandBufferUsageFlags usageFlags)
 {
 	VkCommandBufferBeginInfo info{};

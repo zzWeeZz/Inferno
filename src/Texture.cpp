@@ -75,6 +75,16 @@ bool vkutil::LoadImageFromFile(VulkanEngine& engine, const char* file, Allocated
 			copyRegion.imageExtent = imageExtent;
 
 			vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+			VkImageMemoryBarrier imageBarrierToFrontTransfer{};
+			imageBarrierToFrontTransfer.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			imageBarrierToFrontTransfer.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			imageBarrierToFrontTransfer.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageBarrierToFrontTransfer.image = newImage.image;
+			imageBarrierToFrontTransfer.subresourceRange = range;
+			imageBarrierToFrontTransfer.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			imageBarrierToFrontTransfer.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrierToFrontTransfer);
 		});
 
 	return true;

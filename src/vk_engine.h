@@ -23,6 +23,7 @@ struct FrameData
 	VkCommandBuffer commandBuffer;
 	AllocatedBuffer cameraBuffer;
 	VkDescriptorSet cameraDescriptor;
+	VkDescriptorSet textureDescriptor;
 };
 
 struct UploadContext
@@ -115,6 +116,10 @@ private:
 	FrameData& GetCurrentFrame();
 
 	VkDescriptorSetLayout m_GlobalSetlayout;
+	VkDescriptorSetLayout m_TextureSetlayout;
+
+	VkDescriptorSet m_TextureDescriptorSet;
+
 	VkDescriptorPool m_DescriptorPool;
 
 	DeletionQueue m_DeletionQueue;
